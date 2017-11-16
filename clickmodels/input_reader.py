@@ -1,5 +1,6 @@
 from collections import namedtuple
 import json
+import six
 
 DEBUG = False
 
@@ -26,7 +27,7 @@ class InputReader:
         sessions = []
         for line in f:
             hash_digest, query, region, intentWeight, urls, layout, clicks = line.rstrip().split('\t')
-            urls, layout, clicks = map(json.loads, [urls, layout, clicks])
+            urls, layout, clicks = list(map(json.loads, [urls, layout, clicks]))
             extra = {}
             urlsObserved = 0
             if self.extended_log_format:
@@ -92,7 +93,7 @@ class InputReader:
         """ Convert dict of the format {"0": doc0, "13": doc13} to the list of the length maxLen"""
         convertedList = [defaultElem] * maxLen
         extra = {}
-        for k, v in sparseDict.iteritems():
+        for k, v in six.iteritems(sparseDict):
             try:
                 convertedList[int(k)] = v
             except (ValueError, IndexError):

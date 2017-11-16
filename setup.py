@@ -12,7 +12,7 @@ def read_md(file_name):
 
 setup(
     name='clickmodels',
-    version='1.0.2',
+    version='1.0.3',
     author='Aleksandr Chuklin',
     packages=['clickmodels'],
     scripts=glob.glob('bin/*.py'),
@@ -20,5 +20,5 @@ setup(
     license='LICENSE',
     description='Probabilistic models of user behavior on a search engine result page',
     long_description=read_md('README.md'),
-    install_requires=[],
+    install_requires=['six'],
 )

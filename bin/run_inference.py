@@ -6,6 +6,7 @@
 # hash \t query \t region \t intent_probability \t url_list (json) \t layout (json) \t clicks (json)
 
 from __future__ import print_function
+import six
 
 from clickmodels.inference import *
 from clickmodels.input_reader import InputReader
@@ -43,7 +44,7 @@ if __name__ == '__main__':
         p_L_C_R_frac = defaultdict(lambda: [0, 0.0001])
         for s in sessions:
             lastClickPos = max((i for i, c in enumerate(s.clicks) if c != 0))
-            for i in xrange(lastClickPos + 1):
+            for i in six.range(lastClickPos + 1):
                 u = s.results[i]
                 if s.clicks[i] != 0:
                     p_C_R_frac[u][0] += 1
@@ -118,8 +119,8 @@ if __name__ == '__main__':
             print('\n'.join(['%s\t%f' % r for r in \
                 [(x, ubmModel.alpha[False][0][x]) for x in \
                     ['IRRELEVANT', 'RELEVANT', 'USEFUL', 'VITAL']]]))
-            for d in xrange(MAX_DOCS_PER_QUERY):
-                for r in xrange(MAX_DOCS_PER_QUERY):
+            for d in six.range(MAX_DOCS_PER_QUERY):
+                for r in six.range(MAX_DOCS_PER_QUERY):
                     print(('%.4f ' % (ubmModel.gamma[0][r][MAX_DOCS_PER_QUERY - 1 - d] if r + d >= MAX_DOCS_PER_QUERY - 1 else 0)), end=' ')
                 print()
         print('UBM', ubmModel.test(testSessions))

@@ -3,11 +3,13 @@
 import sys
 import os
 import json
-import urllib
+try:
+    from urllib.request import quote
+except ImportError:
+    from urllib import quote
 import random
 import glob
 
-from urllib.request import quote
 from collections import defaultdict
 
 END_PAGE = 30

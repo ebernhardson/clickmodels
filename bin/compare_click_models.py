@@ -4,6 +4,7 @@ from __future__ import print_function
 
 import sys
 import glob
+import six
 
 from clickmodels.bootstrap import bootstrap
 from clickmodels.inference import *
@@ -58,11 +59,11 @@ if __name__ == '__main__':
         print('Usage: {0:s} directory_with_log_files_for_different_days'.format(sys.argv[0]), file=sys.stderr)
         sys.exit(1)
     perplexityGains = dict((m, defaultdict(lambda: [])) for m in TESTED_MODEL_PAIRS)
-    perplexityGainsPos = [dict((m, defaultdict(lambda: [])) for m in TESTED_MODEL_PAIRS) for pos in xrange(MAX_DOCS_PER_QUERY)]
+    perplexityGainsPos = [dict((m, defaultdict(lambda: [])) for m in TESTED_MODEL_PAIRS) for pos in six.range(MAX_DOCS_PER_QUERY)]
     llGains = dict((m, defaultdict(lambda: [])) for m in TESTED_MODEL_PAIRS)
     interestingFiles = sorted(glob.glob(sys.argv[1] + '/*'))
     N = len(interestingFiles) // 2
-    for fileNumber in xrange(N):
+    for fileNumber in six.range(N):
         trainFile = interestingFiles[2 * fileNumber]
         testFile = interestingFiles[2 * fileNumber + 1]
         readInput = InputReader(MIN_DOCS_PER_QUERY, MAX_DOCS_PER_QUERY,
@@ -92,19 +93,19 @@ if __name__ == '__main__':
                 res.append(currentResult)
                 print(float(fileNumber) / N, modelName, idx, currentResult, file=sys.stderr)
                 del m
-            for i in xrange(len(models)):
-                for j in xrange(i + 1, len(models)):
+            for i in six.range(len(models)):
+                for j in six.range(i + 1, len(models)):
                     perplexityGains[modelName][(i, j)].append(perpGain(res[i][1], res[j][1]))
                     llGains[modelName][(i, j)].append(llGain(res[i][0], res[j][0]))
-                    for pos in xrange(MAX_DOCS_PER_QUERY):
+                    for pos in six.range(MAX_DOCS_PER_QUERY):
                         perplexityGainsPos[pos][modelName][(i, j)].append(perpGain(res[i][2][pos], res[j][2][pos]))
 
     for t in ['ll', 'perplexity']:
         print(t.upper())
         for m in TESTED_MODEL_PAIRS:
             gainsDict = locals()[t + 'Gains'][m]
-            for k, gains in gainsDict.iteritems():
+            for k, gains in six.iteritems(gainsDict):
                 print(m, k, gains, bootstrap(gains)[1])
                 if t == 'perplexity':
-                    print(m, 'POSITION PERPLEXITY GAINS:', k, [[f(perplexityGainsPos[pos][m][k]) for f in [avg, lambda l: bootstrap(l)[1]]] for pos in xrange(MAX_DOCS_PER_QUERY)])
+                    print(m, 'POSITION PERPLEXITY GAINS:', k, [[f(perplexityGainsPos[pos][m][k]) for f in [avg, lambda l: bootstrap(l)[1]]] for pos in six.range(MAX_DOCS_PER_QUERY)])
 

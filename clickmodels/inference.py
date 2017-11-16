@@ -6,6 +6,7 @@ import gc
 import json
 import math
 import random
+import six
 import sys
 
 from .config_sample import MAX_ITERATIONS, DEBUG, PRETTY_LOG, MAX_DOCS_PER_QUERY, SERP_SIZE, TRANSFORM_LOG, QUERY_INDEPENDENT_PAGER, DEFAULT_REL
@@ -41,10 +42,10 @@ class ClickModel:
         logLikelihood = 0.0
         positionPerplexity = [0.0] * self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY)
         positionPerplexityClickSkip = [[0.0, 0.0] \
-                for i in xrange(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY))]
+                for i in six.range(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY))]
         counts = [0] * self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY)
         countsClickSkip = [[0, 0] \
-                for i in xrange(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY))]
+                for i in six.range(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY))]
         possibleIntents = [False] if self.ignoreIntents else [False, True]
         for s in sessions:
             iw = s.intentWeight
@@ -79,7 +80,7 @@ class ClickModel:
                 correctedRank += 1
         positionPerplexity = [2 ** (-x / count if count else x) for (x, count) in zip(positionPerplexity, counts)]
         positionPerplexityClickSkip = [[2 ** (-x[click] / (count[click] if count[click] else 1) if count else x) \
-                for (x, count) in zip(positionPerplexityClickSkip, countsClickSkip)] for click in xrange(2)]
+                for (x, count) in zip(positionPerplexityClickSkip, countsClickSkip)] for click in six.range(2)]
         perplexity = sum(positionPerplexity) / len(positionPerplexity)
         if reportPositionPerplexity:
             return logLikelihood / len(sessions), perplexity, positionPerplexity, positionPerplexityClickSkip
@@ -92,7 +93,7 @@ class ClickModel:
             For each intent $i$ and each rank $k$ we have:
             click_probs[i][k-1] = P(C_1, ..., C_k | I=i)
         """
-        click_probs = dict((i, [0.5 ** (k + 1) for k in xrange(len(s.clicks))]) for i in possible_intents)
+        click_probs = dict((i, [0.5 ** (k + 1) for k in six.range(len(s.clicks))]) for i in possible_intents)
         return click_probs
 
     def get_loglikelihood(self, sessions):
@@ -186,7 +187,7 @@ class DbnModel(ClickModel):
         self.urlRelevances = dict((i,
                 [defaultdict(lambda: {'a': self.config.get('DEFAULT_REL', DEFAULT_REL),
                                       's': self.config.get('DEFAULT_REL', DEFAULT_REL)}) \
-                    for q in xrange(max_query_id)]) for i in possibleIntents
+                    for q in six.range(max_query_id)]) for i in possibleIntents
         )
         # here we store distribution of posterior intent weights given train data
         self.queryIntentsWeights = defaultdict(lambda: [])
@@ -194,10 +195,10 @@ class DbnModel(ClickModel):
         if not self.config.get('PRETTY_LOG', PRETTY_LOG):
             print('-' * 80, file=sys.stderr)
             print('Start. Current time is', datetime.now(), file=sys.stderr)
-        for iteration_count in xrange(self.config.get('MAX_ITERATIONS', MAX_ITERATIONS)):
+        for iteration_count in six.range(self.config.get('MAX_ITERATIONS', MAX_ITERATIONS)):
             # urlRelFractions[intent][query][url][r][1] --- coefficient before \log r
             # urlRelFractions[intent][query][url][r][0] --- coefficient before \log (1 - r)
-            urlRelFractions = dict((i, [defaultdict(lambda: {'a': [1.0, 1.0], 's': [1.0, 1.0]}) for q in xrange(max_query_id)]) for i in [False, True])
+            urlRelFractions = dict((i, [defaultdict(lambda: {'a': [1.0, 1.0], 's': [1.0, 1.0]}) for q in six.range(max_query_id)]) for i in [False, True])
             self.queryIntentsWeights = defaultdict(lambda: [])
             # E step
             for s in sessions:
@@ -236,7 +237,7 @@ class DbnModel(ClickModel):
                 for query, d in enumerate(urlRelFractions[i]):
                     if not d:
                         continue
-                    for url, relFractions in d.iteritems():
+                    for url, relFractions in six.iteritems(d):
                         a_u_new = relFractions['a'][1] / (relFractions['a'][1] + relFractions['a'][0])
                         sum_square_displacement += (a_u_new - self.urlRelevances[i][query][url]['a']) ** 2
                         self.urlRelevances[i][query][url]['a'] = a_u_new
@@ -255,7 +256,7 @@ class DbnModel(ClickModel):
                 print('Q functional: %f' % Q_functional, file=sys.stderr)
         if self.config.get('PRETTY_LOG', PRETTY_LOG):
             sys.stderr.write('\n')
-        for q, intentWeights in self.queryIntentsWeights.iteritems():
+        for q, intentWeights in six.iteritems(self.queryIntentsWeights):
             self.queryIntentsWeights[q] = sum(intentWeights) / len(intentWeights)
 
     @staticmethod
@@ -279,12 +280,12 @@ class DbnModel(ClickModel):
         N = len(clicks)
         if debug:
             assert N + 1 == len(layout)
-        alpha = [[0.0, 0.0] for i in xrange(N + 1)]
-        beta = [[0.0, 0.0] for i in xrange(N + 1)]
+        alpha = [[0.0, 0.0] for i in six.range(N + 1)]
+        beta = [[0.0, 0.0] for i in six.range(N + 1)]
         alpha[0] = [0.0, 1.0]
         beta[N] = [1.0, 1.0]
         # P(E_{k+1} = e, C_k | E_k = e', G, I)
-        updateMatrix = [[[0.0 for e1 in [0, 1]] for e in [0, 1]] for i in xrange(N)]
+        updateMatrix = [[[0.0 for e1 in [0, 1]] for e in [0, 1]] for i in six.range(N)]
         for k, C_k in enumerate(clicks):
             a_u = positionRelevances['a'][k]
             s_u = positionRelevances['s'][k]
@@ -300,7 +301,7 @@ class DbnModel(ClickModel):
                 updateMatrix[k][1][0] = 0
                 updateMatrix[k][1][1] = gamma * (1 - s_u) * a_u
 
-        for k in xrange(N):
+        for k in six.range(N):
             for e in [0, 1]:
                 alpha[k + 1][e] = sum(alpha[k][e1] * updateMatrix[k][e][e1] for e1 in [0, 1])
                 beta[N - 1 - k][e] = sum(beta[N - k][e1] * updateMatrix[N - 1 - k][e1][e] for e1 in [0, 1])
@@ -312,7 +313,7 @@ class DbnModel(ClickModel):
         N = len(clicks)
         if self.config.get('DEBUG', DEBUG):
             assert N + 1 == len(layout)
-        sessionEstimate = {'a': [0.0] * N, 's': [0.0] * N, 'e': [[0.0, 0.0] for k in xrange(N)], 'C': 0.0, 'clicks': [0.0] * N}
+        sessionEstimate = {'a': [0.0] * N, 's': [0.0] * N, 'e': [[0.0, 0.0] for k in six.range(N)], 'C': 0.0, 'clicks': [0.0] * N}
         alpha, beta = self.getForwardBackwardEstimates(positionRelevances,
                                                        self.gammas, layout, clicks, intent,
                                                        debug=self.config.get('DEBUG', DEBUG)
@@ -417,7 +418,7 @@ class SimplifiedDbnModel(DbnModel):
         if max_query_id is None:
             print('WARNING: no MAX_QUERY_ID specified for', self, file=sys.stderr)
             max_query_id = 100000
-        urlRelFractions = [defaultdict(lambda: {'a': [1.0, 1.0], 's': [1.0, 1.0]}) for q in xrange(max_query_id)]
+        urlRelFractions = [defaultdict(lambda: {'a': [1.0, 1.0], 's': [1.0, 1.0]}) for q in six.range(max_query_id)]
         for s in sessions:
             query = s.query
             lastClickedPos = len(s.clicks) - 1
@@ -444,11 +445,11 @@ class SimplifiedDbnModel(DbnModel):
         self.urlRelevances = dict((i,
                 [defaultdict(lambda: {'a': self.config.get('DEFAULT_REL', DEFAULT_REL),
                                       's': self.config.get('DEFAULT_REL', DEFAULT_REL)}) \
-                        for q in xrange(max_query_id)]) for i in [False])
+                        for q in six.range(max_query_id)]) for i in [False])
         for query, d in enumerate(urlRelFractions):
             if not d:
                 continue
-            for url, relFractions in d.iteritems():
+            for url, relFractions in six.iteritems(d):
                 self.urlRelevances[False][query][url]['a'] = relFractions['a'][1] / (relFractions['a'][1] + relFractions['a'][0])
                 self.urlRelevances[False][query][url]['s'] = relFractions['s'][1] / (relFractions['s'][1] + relFractions['s'][0])
 
@@ -471,29 +472,29 @@ class UbmModel(ClickModel):
         # alpha: intent -> query -> url -> "attractiveness probability"
         self.alpha = dict((i,
                 [defaultdict(lambda: self.config.get('DEFAULT_REL', DEFAULT_REL)) \
-                        for q in xrange(max_query_id)]) for i in possibleIntents)
+                        for q in six.range(max_query_id)]) for i in possibleIntents)
         # gamma: freshness of the current result: gammaType -> rank -> "distance from the last click" - 1 -> examination probability
         self.gamma = [[[0.5 \
-            for d in xrange(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY))] \
-                for r in xrange(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY))] \
-                    for g in xrange(self.gammaTypesNum)]
+            for d in six.range(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY))] \
+                for r in six.range(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY))] \
+                    for g in six.range(self.gammaTypesNum)]
         if self.explorationBias:
             self.e = [0.5 \
-                    for p in xrange(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY))]
+                    for p in six.range(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY))]
         if not self.config.get('PRETTY_LOG', PRETTY_LOG):
             print('-' * 80, file=sys.stderr)
             print('Start. Current time is', datetime.now(), file=sys.stderr)
-        for iteration_count in xrange(self.config.get('MAX_ITERATIONS', MAX_ITERATIONS)):
+        for iteration_count in six.range(self.config.get('MAX_ITERATIONS', MAX_ITERATIONS)):
             self.queryIntentsWeights = defaultdict(lambda: [])
             # not like in DBN! xxxFractions[0] is a numerator while xxxFraction[1] is a denominator
-            alphaFractions = dict((i, [defaultdict(lambda: [1.0, 2.0]) for q in xrange(max_query_id)]) for i in possibleIntents)
+            alphaFractions = dict((i, [defaultdict(lambda: [1.0, 2.0]) for q in six.range(max_query_id)]) for i in possibleIntents)
             gammaFractions = [[[[1.0, 2.0] \
-                for d in xrange(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY))] \
-                    for r in xrange(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY))] \
-                        for g in xrange(self.gammaTypesNum)]
+                for d in six.range(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY))] \
+                    for r in six.range(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY))] \
+                        for g in six.range(self.gammaTypesNum)]
             if self.explorationBias:
                 eFractions = [[1.0, 2.0] \
-                        for p in xrange(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY))]
+                        for p in six.range(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY))]
             # E-step
             for s in sessions:
                 query = s.query
@@ -541,20 +542,20 @@ class UbmModel(ClickModel):
             # M-step
             sum_square_displacement = 0.0
             for i in possibleIntents:
-                for q in xrange(max_query_id):
-                    for url, aF in alphaFractions[i][q].iteritems():
+                for q in six.range(max_query_id):
+                    for url, aF in six.iteritems(alphaFractions[i][q]):
                         new_alpha = aF[0] / aF[1]
                         sum_square_displacement += (self.alpha[i][q][url] - new_alpha) ** 2
                         self.alpha[i][q][url] = new_alpha
-            for g in xrange(self.gammaTypesNum):
-                for r in xrange(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY)):
-                    for d in xrange(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY)):
+            for g in six.range(self.gammaTypesNum):
+                for r in six.range(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY)):
+                    for d in six.range(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY)):
                         gF = gammaFractions[g][r][d]
                         new_gamma = gF[0] / gF[1]
                         sum_square_displacement += (self.gamma[g][r][d] - new_gamma) ** 2
                         self.gamma[g][r][d] = new_gamma
             if self.explorationBias:
-                for p in xrange(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY)):
+                for p in six.range(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY)):
                     new_e = eFractions[p][0] / eFractions[p][1]
                     sum_square_displacement += (self.e[p] - new_e) ** 2
                     self.e[p] = new_e
@@ -567,7 +568,7 @@ class UbmModel(ClickModel):
                 print('Iteration: %d, ERROR: %f' % (iteration_count + 1, rmsd), file=sys.stderr)
         if self.config.get('PRETTY_LOG', PRETTY_LOG):
             sys.stderr.write('\n')
-        for q, intentWeights in self.queryIntentsWeights.iteritems():
+        for q, intentWeights in six.iteritems(self.queryIntentsWeights):
             self.queryIntentsWeights[q] = sum(intentWeights) / len(intentWeights)
 
     def _getSessionProb(self, s):
@@ -595,7 +596,7 @@ class UbmModel(ClickModel):
             for i in possibleIntents:
                 a = self.alpha[i][s.query][url]
                 g = self.getGamma(self.gamma, rank, prevClick, layout, i)
-                if self.explorationBias and any(s.layout[k] and s.clicks[k] for k in xrange(rank)) and not s.layout[rank]:
+                if self.explorationBias and any(s.layout[k] and s.clicks[k] for k in six.range(rank)) and not s.layout[rank]:
                     g *= 1 - self.e[firstVerticalPos]
                 prevProb = 1 if rank == 0 else clickProbs[i][-1]
                 if c == 0:
@@ -623,9 +624,9 @@ class DcmModel(ClickModel):
             print('WARNING: no MAX_QUERY_ID specified for', self, file=sys.stderr)
             max_query_id = 100000
         possibleIntents = [False] if self.ignoreIntents else [False, True]
-        urlRelFractions = dict((i, [defaultdict(lambda: [1.0, 1.0]) for q in xrange(max_query_id)]) for i in possibleIntents)
-        gammaFractions = [[[1.0, 1.0] for g in xrange(self.gammaTypesNum)] \
-                for r in xrange(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY))]
+        urlRelFractions = dict((i, [defaultdict(lambda: [1.0, 1.0]) for q in six.range(max_query_id)]) for i in possibleIntents)
+        gammaFractions = [[[1.0, 1.0] for g in six.range(self.gammaTypesNum)] \
+                for r in six.range(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY))]
         for s in sessions:
             query = s.query
             layout = [False] * len(s.layout) if self.ignoreLayout else s.layout
@@ -646,17 +647,17 @@ class DcmModel(ClickModel):
                         urlRelFractions[i][query][u][0] += intentWeights[i]
         self.urlRelevances = dict((i,
                 [defaultdict(lambda: self.config.get('DEFAULT_REL', DEFAULT_REL)) \
-                        for q in xrange(max_query_id)]) for i in possibleIntents)
-        self.gammas = [[0.5 for g in xrange(self.gammaTypesNum)] \
-                for r in xrange(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY))]
+                        for q in six.range(max_query_id)]) for i in possibleIntents)
+        self.gammas = [[0.5 for g in six.range(self.gammaTypesNum)] \
+                for r in six.range(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY))]
         for i in possibleIntents:
             for query, d in enumerate(urlRelFractions[i]):
                 if not d:
                     continue
-                for url, relFractions in d.iteritems():
+                for url, relFractions in six.iteritems(d):
                     self.urlRelevances[i][query][url] = relFractions[1] / (relFractions[1] + relFractions[0])
-        for k in xrange(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY)):
-            for g in xrange(self.gammaTypesNum):
+        for k in six.range(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY)):
+            for g in six.range(self.gammaTypesNum):
                 self.gammas[k][g] = gammaFractions[k][g][0] / (gammaFractions[k][g][0] + gammaFractions[k][g][1])
 
     def _get_click_probs(self, s, possibleIntents):
