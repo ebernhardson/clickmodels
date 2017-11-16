@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from collections import defaultdict
 from datetime import datetime
 import gc
@@ -178,7 +180,7 @@ class DbnModel(ClickModel):
         possibleIntents = [False] if self.ignoreIntents else [False, True]
         max_query_id = self.config.get('MAX_QUERY_ID')
         if max_query_id is None:
-            print >>sys.stderr, 'WARNING: no MAX_QUERY_ID specified for', self
+            print('WARNING: no MAX_QUERY_ID specified for', self, file=sys.stderr)
             max_query_id = 100000
         # intent -> query -> url -> (a_u, s_u)
         self.urlRelevances = dict((i,
@@ -190,8 +192,8 @@ class DbnModel(ClickModel):
         self.queryIntentsWeights = defaultdict(lambda: [])
         # EM algorithm
         if not self.config.get('PRETTY_LOG', PRETTY_LOG):
-            print >>sys.stderr, '-' * 80
-            print >>sys.stderr, 'Start. Current time is', datetime.now()
+            print('-' * 80, file=sys.stderr)
+            print('Start. Current time is', datetime.now(), file=sys.stderr)
         for iteration_count in xrange(self.config.get('MAX_ITERATIONS', MAX_ITERATIONS)):
             # urlRelFractions[intent][query][url][r][1] --- coefficient before \log r
             # urlRelFractions[intent][query][url][r][0] --- coefficient before \log (1 - r)
@@ -249,8 +251,8 @@ class DbnModel(ClickModel):
             if self.config.get('PRETTY_LOG', PRETTY_LOG):
                 sys.stderr.write('%d..' % (iteration_count + 1))
             else:
-                print >>sys.stderr, 'Iteration: %d, ERROR: %f' % (iteration_count + 1, rmsd)
-                print >>sys.stderr, 'Q functional: %f' % Q_functional
+                print('Iteration: %d, ERROR: %f' % (iteration_count + 1, rmsd), file=sys.stderr)
+                print('Q functional: %f' % Q_functional, file=sys.stderr)
         if self.config.get('PRETTY_LOG', PRETTY_LOG):
             sys.stderr.write('\n')
         for q, intentWeights in self.queryIntentsWeights.iteritems():
@@ -318,7 +320,7 @@ class DbnModel(ClickModel):
         try:
             varphi = [((a[0] * b[0]) / (a[0] * b[0] + a[1] * b[1]), (a[1] * b[1]) / (a[0] * b[0] + a[1] * b[1])) for a, b in zip(alpha, beta)]
         except ZeroDivisionError:
-            print >>sys.stderr, alpha, beta, [(a[0] * b[0] + a[1] * b[1]) for a, b in zip(alpha, beta)], positionRelevances
+            print(alpha, beta, [(a[0] * b[0] + a[1] * b[1]) for a, b in zip(alpha, beta)], positionRelevances, file=sys.stderr)
             sys.exit(1)
         if self.config.get('DEBUG', DEBUG):
             assert all(ph[0] < 0.01 for ph, c in zip(varphi[:N], clicks) if c != 0), (alpha, beta, varphi, clicks)
@@ -413,7 +415,7 @@ class SimplifiedDbnModel(DbnModel):
     def train(self, sessions):
         max_query_id = self.config.get('MAX_QUERY_ID')
         if max_query_id is None:
-            print >>sys.stderr, 'WARNING: no MAX_QUERY_ID specified for', self
+            print('WARNING: no MAX_QUERY_ID specified for', self, file=sys.stderr)
             max_query_id = 100000
         urlRelFractions = [defaultdict(lambda: {'a': [1.0, 1.0], 's': [1.0, 1.0]}) for q in xrange(max_query_id)]
         for s in sessions:
@@ -463,7 +465,7 @@ class UbmModel(ClickModel):
     def train(self, sessions):
         max_query_id = self.config.get('MAX_QUERY_ID')
         if max_query_id is None:
-            print >>sys.stderr, 'WARNING: no MAX_QUERY_ID specified for', self
+            print('WARNING: no MAX_QUERY_ID specified for', self, file=sys.stderr)
             max_query_id = 100000
         possibleIntents = [False] if self.ignoreIntents else [False, True]
         # alpha: intent -> query -> url -> "attractiveness probability"
@@ -479,8 +481,8 @@ class UbmModel(ClickModel):
             self.e = [0.5 \
                     for p in xrange(self.config.get('MAX_DOCS_PER_QUERY', MAX_DOCS_PER_QUERY))]
         if not self.config.get('PRETTY_LOG', PRETTY_LOG):
-            print >>sys.stderr, '-' * 80
-            print >>sys.stderr, 'Start. Current time is', datetime.now()
+            print('-' * 80, file=sys.stderr)
+            print('Start. Current time is', datetime.now(), file=sys.stderr)
         for iteration_count in xrange(self.config.get('MAX_ITERATIONS', MAX_ITERATIONS)):
             self.queryIntentsWeights = defaultdict(lambda: [])
             # not like in DBN! xxxFractions[0] is a numerator while xxxFraction[1] is a denominator
@@ -562,7 +564,7 @@ class UbmModel(ClickModel):
             if self.config.get('PRETTY_LOG', PRETTY_LOG):
                 sys.stderr.write('%d..' % (iteration_count + 1))
             else:
-                print >>sys.stderr, 'Iteration: %d, ERROR: %f' % (iteration_count + 1, rmsd)
+                print('Iteration: %d, ERROR: %f' % (iteration_count + 1, rmsd), file=sys.stderr)
         if self.config.get('PRETTY_LOG', PRETTY_LOG):
             sys.stderr.write('\n')
         for q, intentWeights in self.queryIntentsWeights.iteritems():
@@ -618,7 +620,7 @@ class DcmModel(ClickModel):
     def train(self, sessions):
         max_query_id = self.config.get('MAX_QUERY_ID')
         if max_query_id is None:
-            print >>sys.stderr, 'WARNING: no MAX_QUERY_ID specified for', self
+            print('WARNING: no MAX_QUERY_ID specified for', self, file=sys.stderr)
             max_query_id = 100000
         possibleIntents = [False] if self.ignoreIntents else [False, True]
         urlRelFractions = dict((i, [defaultdict(lambda: [1.0, 1.0]) for q in xrange(max_query_id)]) for i in possibleIntents)

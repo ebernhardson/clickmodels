@@ -5,6 +5,7 @@
 # Input format (see README.md for more details):
 # hash \t query \t region \t intent_probability \t url_list (json) \t layout (json) \t clicks (json)
 
+from __future__ import print_function
 
 from clickmodels.inference import *
 from clickmodels.input_reader import InputReader
@@ -52,7 +53,7 @@ if __name__ == '__main__':
                 p_C_R_frac[u][1] += 1
 
         for u in ['IRRELEVANT', 'RELEVANT', 'USEFUL', 'VITAL']:
-            print 'P(C|%s)\t%f\tP(L|C,%s)\t%f' % (u, float(p_C_R_frac[u][0]) / p_C_R_frac[u][1], u, float(p_L_C_R_frac[u][0]) / p_L_C_R_frac[u][1])
+            print('P(C|%s)\t%f\tP(L|C,%s)\t%f' % (u, float(p_C_R_frac[u][0]) / p_C_R_frac[u][1], u, float(p_L_C_R_frac[u][0]) / p_L_C_R_frac[u][1]))
     # ---------------------------------------------------------------
 
     if len(sys.argv) > 1:
@@ -73,8 +74,8 @@ if __name__ == '__main__':
                 for ss in [sessions, testSessions]
         )
 
-    print 'Train sessions: %d, test sessions: %d' % (len(sessions), len(testSessions))
-    print 'Number of train sessions with 10+ urls shown:', len([s for s in sessions if len(s.results) > SERP_SIZE + 1])
+    print('Train sessions: %d, test sessions: %d' % (len(sessions), len(testSessions)))
+    print('Number of train sessions with 10+ urls shown:', len([s for s in sessions if len(s.results) > SERP_SIZE + 1]))
     #clickProbs = [0.0] * MAX_DOCS_PER_QUERY
     #counts = [0] * MAX_DOCS_PER_QUERY
     #for s in sessions:
@@ -100,75 +101,75 @@ if __name__ == '__main__':
     if 'Baseline' in USED_MODELS:
         baselineModel = ClickModel(config=config)
         baselineModel.train(sessions)
-        print 'Baseline:', baselineModel.test(testSessions)
+        print('Baseline:', baselineModel.test(testSessions))
 
     if 'SDBN' in USED_MODELS:
         sdbnModel = SimplifiedDbnModel(config=config)
         sdbnModel.train(sessions)
         if TRANSFORM_LOG:
-            print '(a_p, s_p) = ', sdbnModel.urlRelevances[False][0]['PAGER']
-        print 'SDBN:', sdbnModel.test(testSessions)
+            print('(a_p, s_p) = ', sdbnModel.urlRelevances[False][0]['PAGER'])
+        print('SDBN:', sdbnModel.test(testSessions))
         del sdbnModel        # needed to minimize memory consumption (see gc.collect() below)
 
     if 'UBM' in USED_MODELS:
         ubmModel = UbmModel(config=config)
         ubmModel.train(sessions)
         if TRAIN_FOR_METRIC:
-            print '\n'.join(['%s\t%f' % r for r in \
+            print('\n'.join(['%s\t%f' % r for r in \
                 [(x, ubmModel.alpha[False][0][x]) for x in \
-                    ['IRRELEVANT', 'RELEVANT', 'USEFUL', 'VITAL']]])
+                    ['IRRELEVANT', 'RELEVANT', 'USEFUL', 'VITAL']]]))
             for d in xrange(MAX_DOCS_PER_QUERY):
                 for r in xrange(MAX_DOCS_PER_QUERY):
-                    print ('%.4f ' % (ubmModel.gamma[0][r][MAX_DOCS_PER_QUERY - 1 - d] if r + d >= MAX_DOCS_PER_QUERY - 1 else 0)),
-                print
-        print 'UBM', ubmModel.test(testSessions)
+                    print(('%.4f ' % (ubmModel.gamma[0][r][MAX_DOCS_PER_QUERY - 1 - d] if r + d >= MAX_DOCS_PER_QUERY - 1 else 0)), end=' ')
+                print()
+        print('UBM', ubmModel.test(testSessions))
         del ubmModel       # needed to minimize memory consumption (see gc.collect() below)
 
     if 'UBM-IA' in USED_MODELS:
         ubmModel = UbmModel(ignoreIntents=False, ignoreLayout=False, config=config)
         ubmModel.train(sessions)
-        print 'UBM-IA', ubmModel.test(testSessions)
+        print('UBM-IA', ubmModel.test(testSessions))
         del ubmModel       # needed to minimize memory consumption (see gc.collect() below)
 
     if 'EB_UBM' in USED_MODELS:
         ebUbmModel = EbUbmModel(config=config)
         ebUbmModel.train(sessions)
         # print 'Exploration bias:', ebUbmModel.e
-        print 'EB_UBM', ebUbmModel.test(testSessions)
+        print('EB_UBM', ebUbmModel.test(testSessions))
         del ebUbmModel       # needed to minimize memory consumption (see gc.collect() below)
 
     if 'EB_UBM-IA' in USED_MODELS:
         ebUbmModel = EbUbmModel(ignoreIntents=False, ignoreLayout=False, config=config)
         ebUbmModel.train(sessions)
         # print 'Exploration bias:', ebUbmModel.e
-        print 'EB_UBM-IA', ebUbmModel.test(testSessions)
+        print('EB_UBM-IA', ebUbmModel.test(testSessions))
         del ebUbmModel       # needed to minimize memory consumption (see gc.collect() below)
 
     if 'DCM' in USED_MODELS:
         dcmModel = DcmModel(config=config)
         dcmModel.train(sessions)
         if TRAIN_FOR_METRIC:
-            print '\n'.join(['%s\t%f' % r for r in \
+            print('\n'.join(['%s\t%f' % r for r in \
                 [(x, dcmModel.urlRelevances[False][0][x]) for x in \
-                    ['IRRELEVANT', 'RELEVANT', 'USEFUL', 'VITAL']]])
-            print 'DCM gammas:', dcmModel.gammas
-        print 'DCM', dcmModel.test(testSessions)
+                    ['IRRELEVANT', 'RELEVANT', 'USEFUL', 'VITAL']]]))
+            print('DCM gammas:', dcmModel.gammas)
+        print('DCM', dcmModel.test(testSessions))
         del dcmModel       # needed to minimize memory consumption (see gc.collect() below)
 
     if 'DCM-IA' in USED_MODELS:
         dcmModel = DcmModel(ignoreIntents=False, ignoreLayout=False, config=config)
         dcmModel.train(sessions)
         # print 'DCM gammas:', dcmModel.gammas
-        print 'DCM-IA', dcmModel.test(testSessions)
+        print('DCM-IA', dcmModel.test(testSessions))
         del dcmModel       # needed to minimize memory consumption (see gc.collect() below)
 
     if 'DBN' in USED_MODELS:
         dbnModel = DbnModel((0.9, 0.9, 0.9, 0.9), config=config)
         dbnModel.train(sessions)
-        print 'DBN:', dbnModel.test(testSessions)
+        print('DBN:', dbnModel.test(testSessions))
         for session in testSessions:
-            print "relevances", dbnModel.get_model_relevances(session)
-            print "clicks", dbnModel.generate_clicks(session)
+            print("relevances", dbnModel.get_model_relevances(session))
+            print("clicks", dbnModel.generate_clicks(session))
         del dbnModel       # needed to minimize memory consumption (see gc.collect() below)
 
     if 'DBN-IA' in USED_MODELS:
@@ -176,5 +177,5 @@ if __name__ == '__main__':
             gc.collect()
             dbnModel = DbnModel(gammas, ignoreIntents=False, ignoreLayout=False, config=config)
             dbnModel.train(sessions)
-            print 'DBN-IA: %.2f %.2f %.2f %.2f' % gammas, dbnModel.test(testSessions)
+            print('DBN-IA: %.2f %.2f %.2f %.2f' % gammas, dbnModel.test(testSessions))
 

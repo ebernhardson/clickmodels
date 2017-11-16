@@ -8,6 +8,8 @@
     http://adorio-research.org/wordpress/?p=12295
 """
 
+from __future__ import print_function
+
 import numpy as np
 import random
 
@@ -41,7 +43,7 @@ def bootstrap(sample, samplesize=None, nsamples=1000, statfunc=np.mean, conf=0.9
 def Test():
     random.seed(42)
     x = [-0.0802915429072737, -0.053250352200284734, -0.01736675618732031, 0.023235301004853604, 0.11978171918496372, 0.05658880725170068, -0.009028639702335362, 0.044647677002185304, 0.11031884561909511, 0.0681469067959517, 0.005213181783769727, 0.05017491558203524, 0.01865825757134676, -0.040601203753332094, -0.016567084581231573]
-    print bootstrap(x)
+    print(bootstrap(x))
 
 if __name__ == "__main__":
     Test()

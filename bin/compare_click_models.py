@@ -1,5 +1,7 @@
 #!/usr/bin/env pypy
 
+from __future__ import print_function
+
 import sys
 import glob
 
@@ -53,8 +55,7 @@ MODEL_CONSTRUCTORS = {
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
-        print >>sys.stderr, \
-            'Usage: {0:s} directory_with_log_files_for_different_days'.format(sys.argv[0])
+        print('Usage: {0:s} directory_with_log_files_for_different_days'.format(sys.argv[0]), file=sys.stderr)
         sys.exit(1)
     perplexityGains = dict((m, defaultdict(lambda: [])) for m in TESTED_MODEL_PAIRS)
     perplexityGainsPos = [dict((m, defaultdict(lambda: [])) for m in TESTED_MODEL_PAIRS) for pos in xrange(MAX_DOCS_PER_QUERY)]
@@ -89,7 +90,7 @@ if __name__ == '__main__':
                 m.train(trainSessions)
                 currentResult = m.test(testSessions, reportPositionPerplexity=True)
                 res.append(currentResult)
-                print >>sys.stderr, float(fileNumber) / N, modelName, idx, currentResult
+                print(float(fileNumber) / N, modelName, idx, currentResult, file=sys.stderr)
                 del m
             for i in xrange(len(models)):
                 for j in xrange(i + 1, len(models)):
@@ -99,11 +100,11 @@ if __name__ == '__main__':
                         perplexityGainsPos[pos][modelName][(i, j)].append(perpGain(res[i][2][pos], res[j][2][pos]))
 
     for t in ['ll', 'perplexity']:
-        print t.upper()
+        print(t.upper())
         for m in TESTED_MODEL_PAIRS:
             gainsDict = locals()[t + 'Gains'][m]
             for k, gains in gainsDict.iteritems():
-                print m, k, gains, bootstrap(gains)[1]
+                print(m, k, gains, bootstrap(gains)[1])
                 if t == 'perplexity':
-                    print m, 'POSITION PERPLEXITY GAINS:', k, [[f(perplexityGainsPos[pos][m][k]) for f in [avg, lambda l: bootstrap(l)[1]]] for pos in xrange(MAX_DOCS_PER_QUERY)]
+                    print(m, 'POSITION PERPLEXITY GAINS:', k, [[f(perplexityGainsPos[pos][m][k]) for f in [avg, lambda l: bootstrap(l)[1]]] for pos in xrange(MAX_DOCS_PER_QUERY)])
 
